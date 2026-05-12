@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useChatStore } from '@/store/useChatStore';
+import { signOut } from 'next-auth/react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -24,18 +25,13 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       .then(data => setChats(Array.isArray(data) ? data : []));
   }, []);
 
-  const createNewChat = async () => {
-    const res = await fetch('/api/chats', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: 'محادثة جديدة' })
-    });
-    const data = await res.json();
-    if (data.id) {
-      setChats([data, ...chats]);
-      setCurrentChatId(data.id);
-      clearMessages();
-    }
+  const createNewChat = () => {
+    setCurrentChatId(null);
+    clearMessages();
+  };
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: '/login' });
   };
 
   return (
