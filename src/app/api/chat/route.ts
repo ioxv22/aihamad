@@ -14,7 +14,12 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     const lastMessage = messages[messages.length - 1];
 
-    const githubToken = process.env.GITHUB_TOKEN_GPT5 || process.env.GITHUB_TOKEN_GPT5NANO || process.env.GITHUB_TOKEN_DEEPSEEK || "";
+    const githubToken = process.env.GITHUB_TOKEN_GPT5 || 
+                        process.env.github_token_gpt5 ||
+                        process.env.GITHUB_TOKEN_GPT5NANO || 
+                        process.env.GITHUB_TOKEN_DEEPSEEK || 
+                        "";
+    
     const openaiKey = process.env.OPENAI_API_KEY;
 
     // 1. Save User Message to DB (if chatId and session exist)
