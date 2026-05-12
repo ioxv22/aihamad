@@ -60,7 +60,8 @@ export function ChatWindow({ messages, streamingMessage, isLoading }: ChatWindow
               msg={{ 
                 id: 'streaming', 
                 role: 'assistant', 
-                content: streamingMessage 
+                content: streamingMessage,
+                createdAt: new Date()
               }} 
               isStreaming 
             />
