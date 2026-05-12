@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 
-interface Message {
+export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   model?: string;
+  imageUrl?: string;
+  attachments?: any[];
   createdAt: Date;
 }
 

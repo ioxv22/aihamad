@@ -5,14 +5,8 @@ import ReactMarkdown from 'react-markdown';
 import { User, Bot, Copy, Check, Sparkles, Terminal, RotateCcw, FolderOpen } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { Message } from '@/store/useChatStore';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  attachments?: any[];
-  imageUrl?: string; // For AI generated images
-}
 
 interface ChatWindowProps {
   messages: Message[];
