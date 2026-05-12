@@ -6,13 +6,13 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { chatId: string } }
+  { params }: { params: Promise<{ chatId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const { chatId } = params;
+    const { chatId } = await params;
     const chatRef = doc(db, "chats", chatId);
     
     // Check if chat exists and belongs to user
@@ -21,7 +21,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
     }
 
-    if (chatDoc.data().userId !== session.user.id) {
+    if (chatDoc.data().userId !== (session.user as any).id) {
       return NextResponse.json({ error: "Unauthorized access to this chat" }, { status: 403 });
     }
 
