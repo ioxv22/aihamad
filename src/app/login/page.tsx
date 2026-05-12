@@ -6,13 +6,27 @@ import { Bot, User, Mail, ArrowRight, Sparkles, ShieldCheck, Loader2 } from 'luc
 import Link from 'next/link';
 import { AmbientBackground } from '@/components/ui/AmbientBackground';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      if (errorParam === 'OAuthSignin') setError('خطأ في الاتصال بمزود الخدمة (جوجل)');
+      else if (errorParam === 'OAuthCallback') setError('خطأ في الرد من جوجل - تأكد من روابط الـ Redirect');
+      else if (errorParam === 'OAuthCreateAccount') setError('فشل إنشاء حساب جديد عبر جوجل');
+      else if (errorParam === 'EmailSignin') setError('فشل إرسال بريد التحقق');
+      else if (errorParam === 'CredentialsSignin') setError('خطأ في البريد أو كلمة المرور');
+      else setError(`حدث خطأ في الدخول: ${errorParam}`);
+    }
+  }, [searchParams]);
 
   const handleCredentialsLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
