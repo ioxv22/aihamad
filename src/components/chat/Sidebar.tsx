@@ -17,6 +17,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, setIsOpen, isAdmin }: SidebarProps) {
   const pathname = usePathname();
+  const { currentChatId, setCurrentChatId, clearMessages } = useChatStore();
   const [chats, setChats] = useState<any[]>([]);
   const deleteChat = async (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
@@ -40,6 +41,11 @@ export function Sidebar({ isOpen, setIsOpen, isAdmin }: SidebarProps) {
     } catch (err) {
       console.error("Delete Chat Error:", err);
     }
+  };
+
+  const createNewChat = () => {
+    setCurrentChatId(null);
+    clearMessages();
   };
 
   return (
