@@ -67,15 +67,15 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </button>
       </div>
 
-      {/* Action Button */}
+      {/* Action Button - Premium Redesign */}
       <div className="px-6 mb-8">
         <button 
           onClick={createNewChat}
-          className="group relative w-full py-4 glass hover:bg-accent/10 rounded-2xl flex items-center justify-center gap-3 font-black transition-all border-dashed overflow-hidden"
+          className="group relative w-full py-4 premium-gradient rounded-2xl flex items-center justify-center gap-3 font-black text-white shadow-xl shadow-accent/20 hover:shadow-accent/40 transition-all duration-300 overflow-hidden active:scale-95"
         >
-          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-          <span>محادثة جديدة</span>
-          <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+          <span className="relative z-10">محادثة جديدة</span>
         </button>
       </div>
 
