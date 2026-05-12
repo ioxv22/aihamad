@@ -23,10 +23,10 @@ export const authOptions = {
         return null;
       }
     }),
-    ...(process.env.GOOGLE_CLIENT_ID ? [
+    ...( (process.env.GOOGLE_CLIENT_ID || process.env.google_client_id) ? [
       GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+        clientId: (process.env.GOOGLE_CLIENT_ID || process.env.google_client_id)!,
+        clientSecret: (process.env.GOOGLE_CLIENT_SECRET || process.env.google_client_secret) || "",
       })
     ] : []),
   ],
