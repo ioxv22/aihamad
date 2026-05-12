@@ -109,15 +109,21 @@ export async function POST(req: Request) {
 
     // --- EXECUTE AI CALL ---
     let stream;
+    let finalKey = openaiKey;
+    let useGitHub = !openaiKey && githubToken;
+    let targetModel = model;
 
-    if (model.includes("gemini")) {
+    // Smart Fallback Logic: If Gemini is selected but no key, switch to GitHub/OpenAI
+    if (model.includes("gemini") && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      console.log("Gemini key missing, falling back to GitHub/OpenAI");
+      useGitHub = !!githubToken;
+      targetModel = "gpt-4o";
+    }
+
+    if (targetModel.includes("gemini") && process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       const token = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-      if (!token) {
-        return NextResponse.json({ error: "عذراً، مفتاح Gemini غير متوفر حالياً." }, { status: 400 });
-      }
-      
       const genAI = new GoogleGenerativeAI(token);
-      const geminiModel = genAI.getGenerativeModel({ model });
+      const geminiModel = genAI.getGenerativeModel({ model: targetModel });
       const result = await geminiModel.generateContentStream({
         contents: messages.map((m: any) => ({
           role: m.role === "user" ? "user" : "model",
@@ -135,29 +141,26 @@ export async function POST(req: Request) {
             }
             if (session?.user && chatId) {
               const messagesRef = collection(db, "messages");
-              addDoc(messagesRef, {
-                chatId, role: "assistant", content: fullText, model, createdAt: serverTimestamp()
-              });
+              addDoc(messagesRef, { chatId, role: "assistant", content: fullText, model: targetModel, createdAt: serverTimestamp() });
             }
           } catch (e) { console.error("Gemini Error:", e); }
           finally { controller.close(); }
         },
       });
     } else {
-      const isGitHub = !openaiKey && githubToken;
-      const finalKey = isGitHub ? githubToken : openaiKey;
-
-      if (!finalKey) {
-        return NextResponse.json({ error: "عذراً، لا يوجد مفتاح تشغيل متاح." }, { status: 400 });
+      const authKey = useGitHub ? githubToken : openaiKey;
+      
+      if (!authKey) {
+        return NextResponse.json({ error: "لا يوجد مفتاح تشغيل متاح. يرجى مراجعة الإعدادات." }, { status: 400 });
       }
 
       const client = new OpenAI({
-        apiKey: finalKey,
-        baseURL: isGitHub ? "https://models.inference.ai.azure.com" : undefined
+        apiKey: authKey,
+        baseURL: useGitHub ? "https://models.inference.ai.azure.com" : undefined
       });
 
       const response = await client.chat.completions.create({
-        model: isGitHub ? "gpt-4o" : model,
+        model: useGitHub ? "gpt-4o" : targetModel,
         messages: formatOpenAIMessages(processedMessages),
         stream: true,
       });
@@ -171,9 +174,12 @@ export async function POST(req: Request) {
               fullText += text;
               controller.enqueue(new TextEncoder().encode(text));
             }
-          } finally {
-            controller.close();
-          }
+            if (session?.user && chatId) {
+              const messagesRef = collection(db, "messages");
+              addDoc(messagesRef, { chatId, role: "assistant", content: fullText, model: targetModel, createdAt: serverTimestamp() });
+            }
+          } catch (e) { console.error("OpenAI Error:", e); }
+          finally { controller.close(); }
         },
       });
     }
