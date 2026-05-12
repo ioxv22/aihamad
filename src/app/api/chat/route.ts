@@ -40,6 +40,9 @@ export async function POST(req: Request) {
         size: "1024x1024",
       });
       
+      const imageUrl = imgRes.data?.[0]?.url;
+      if (!imageUrl) throw new Error("Failed to generate image");
+
       const assistantMessage = "لقد قمت بتوليد هذه الصورة لك بناءً على طلبك:";
       
       if (session?.user && chatId) {
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
           data: {
             chatId,
             role: "assistant",
-            content: assistantMessage + ` [Image: ${imgRes.data[0].url}]`,
+            content: assistantMessage + ` [Image: ${imageUrl}]`,
             model: "dalle-3",
           }
         });
@@ -57,7 +60,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ 
         role: "assistant", 
         content: assistantMessage,
-        imageUrl: imgRes.data[0].url 
+        imageUrl: imageUrl 
       });
     }
 
