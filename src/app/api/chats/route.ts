@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/firebase";
+import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
@@ -9,13 +10,23 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const chats = await prisma.chat.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: 'desc' },
-      take: 20
-    });
+    const chatsRef = collection(db, "chats");
+    const q = query(
+      chatsRef, 
+      where("userId", "==", session.user.id),
+      orderBy("updatedAt", "desc"),
+      limit(20)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const chats = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
     return NextResponse.json(chats);
   } catch (error) {
+    console.error("Error fetching chats:", error);
     return NextResponse.json({ error: "Failed to fetch chats" }, { status: 500 });
   }
 }
@@ -26,18 +37,21 @@ export async function POST(req: Request) {
 
   try {
     const { title = "محادثة جديدة" } = await req.json();
-    const chat = await prisma.chat.create({
-      data: {
-        userId: session.user.id,
-        title: title,
-      }
+    
+    const chatsRef = collection(db, "chats");
+    const chatDoc = await addDoc(chatsRef, {
+      userId: session.user.id,
+      title: title,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     });
 
     // Log the activity to Firebase
     await logActivity('NEW_CHAT', session.user.email || 'Unknown', `قام ببدء محادثة جديدة: ${title}`);
 
-    return NextResponse.json(chat);
+    return NextResponse.json({ id: chatDoc.id, title });
   } catch (error) {
+    console.error("Error creating chat:", error);
     return NextResponse.json({ error: "Failed to create chat" }, { status: 500 });
   }
 }

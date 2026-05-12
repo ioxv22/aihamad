@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/firebase";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
@@ -12,12 +13,22 @@ export async function GET(
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const messages = await prisma.message.findMany({
-      where: { chatId: id },
-      orderBy: { createdAt: 'asc' }
-    });
+    const messagesRef = collection(db, "messages");
+    const q = query(
+      messagesRef,
+      where("chatId", "==", id),
+      orderBy("createdAt", "asc")
+    );
+
+    const querySnapshot = await getDocs(q);
+    const messages = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
     return NextResponse.json(messages);
   } catch (error) {
+    console.error("Error fetching messages:", error);
     return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
   }
 }

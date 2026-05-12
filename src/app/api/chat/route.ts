@@ -2,7 +2,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { OpenAI } from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { logActivity } from "@/lib/logger";
@@ -18,14 +19,19 @@ export async function POST(req: Request) {
 
     // 1. Save User Message to DB (if chatId and session exist)
     if (session?.user && chatId) {
-      await prisma.message.create({
-        data: {
-          chatId,
-          role: "user",
-          content: lastMessage.content,
-          model: model,
-        }
+      const messagesRef = collection(db, "messages");
+      await addDoc(messagesRef, {
+        chatId,
+        role: "user",
+        content: lastMessage.content,
+        model: model,
+        createdAt: serverTimestamp()
       });
+
+      // Update chat's updatedAt
+      const chatRef = doc(db, "chats", chatId);
+      await updateDoc(chatRef, { updatedAt: serverTimestamp() });
+
       await logActivity('NEW_MESSAGE', session.user.email || 'Unknown', `أرسل رسالة جديدة: ${lastMessage.content.substring(0, 50)}...`);
     }
 
@@ -46,13 +52,13 @@ export async function POST(req: Request) {
       const assistantMessage = "لقد قمت بتوليد هذه الصورة لك بناءً على طلبك:";
       
       if (session?.user && chatId) {
-        await prisma.message.create({
-          data: {
-            chatId,
-            role: "assistant",
-            content: assistantMessage + ` [Image: ${imageUrl}]`,
-            model: "dalle-3",
-          }
+        const messagesRef = collection(db, "messages");
+        await addDoc(messagesRef, {
+          chatId,
+          role: "assistant",
+          content: assistantMessage + ` [Image: ${imageUrl}]`,
+          model: "dalle-3",
+          createdAt: serverTimestamp()
         });
         await logActivity('IMAGE_GEN', session.user.email || 'Unknown', `قام بتوليد صورة باستخدام DALL-E 3`);
       }
@@ -121,8 +127,13 @@ export async function POST(req: Request) {
           }
           // Save Assistant Message to DB
           if (session?.user && chatId) {
-            await prisma.message.create({
-              data: { chatId, role: "assistant", content: fullText, model }
+            const messagesRef = collection(db, "messages");
+            await addDoc(messagesRef, {
+              chatId,
+              role: "assistant",
+              content: fullText,
+              model,
+              createdAt: serverTimestamp()
             });
             await logActivity('AI_RESPONSE', 'System', `تمت معالجة رد بنجاح باستخدام ${model}`);
           }
@@ -158,8 +169,13 @@ export async function POST(req: Request) {
           }
           // Save Assistant Message to DB
           if (session?.user && chatId) {
-            await prisma.message.create({
-              data: { chatId, role: "assistant", content: fullText, model }
+            const messagesRef = collection(db, "messages");
+            await addDoc(messagesRef, {
+              chatId,
+              role: "assistant",
+              content: fullText,
+              model,
+              createdAt: serverTimestamp()
             });
             await logActivity('AI_RESPONSE', 'System', `تمت معالجة رد بنجاح باستخدام ${model}`);
           }

@@ -7,7 +7,9 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt" as const,
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -19,8 +21,16 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }: any) {
-      session.user.id = user.id;
+    async jwt({ token, user }: any) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }: any) {
+      if (session.user) {
+        session.user.id = token.id;
+      }
       return session;
     },
   },
