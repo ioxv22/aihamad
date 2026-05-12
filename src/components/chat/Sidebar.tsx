@@ -81,25 +81,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-4 space-y-8 custom-scrollbar">
-        {/* Workspaces Section */}
         <div>
-           <p className="text-[10px] font-black opacity-30 uppercase tracking-widest px-4 mb-4 flex items-center gap-2">
-              <FolderOpen className="w-3 h-3" />
-              مساحات العمل
-           </p>
-           <div className="space-y-1">
-              {['تطوير الويب', 'أبحاث الذكاء الاصطناعي'].map((workspace, i) => (
-                <div key={i} className="flex items-center gap-3 p-4 rounded-2xl hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-white/5 group">
-                   <div className="w-2 h-2 rounded-full bg-accent/40 group-hover:bg-accent transition-colors" />
-                   <span className="text-sm font-bold opacity-60 group-hover:opacity-100">{workspace}</span>
-                </div>
-              ))}
-           </div>
-        </div>
-
-        {/* Recent Chats */}
-        <div>
-          <p className="text-[10px] font-black opacity-30 uppercase tracking-widest px-4 mb-4 flex items-center gap-2">
+          <p className="text-[10px] font-black opacity-20 uppercase tracking-[0.2em] px-4 mb-4 flex items-center gap-2">
             <History className="w-3 h-3" />
             سجل المحادثات
           </p>

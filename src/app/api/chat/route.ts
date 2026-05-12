@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         updateDoc(chatRef, { updatedAt: serverTimestamp() });
       }).catch(e => console.error("Async DB Save Error:", e));
 
-      logActivity('NEW_MESSAGE', session.user.email || 'Unknown', `أرسل رسالة جديدة: ${lastMessage.content.substring(0, 50)}...`);
+      logActivity('INTERACTION', session.user.email || 'User', `User requested assistance with: ${lastMessage.content.substring(0, 50)}...`);
     }
 
     // --- INTEGRATED IMAGE GENERATION ---
@@ -74,17 +74,28 @@ export async function POST(req: Request) {
     }
 
     // --- STANDARD CHAT LOGIC ---
-    const systemPrompt = `أنت Aura AI، نظام ذكاء اصطناعي فائق من تطوير "حمد العبدولي".
-عند إرفاق ملفات أو صور، يجب عليك تحليلها بدقة متناهية وإعطاء الأولوية للمعلومات الموجودة فيها عند الإجابة.`;
+    const systemPrompt = `أنت Aura AI، مساعد ذكاء اصطناعي متطور وشخصي تم تطويره بواسطة "حمد العبدولي".
+شخصيتك: احترافي، ذكي، واقعي جداً، ومفيد لأقصى درجة.
+تعليمات الرد:
+1. كن منظماً جداً: استخدم القوائم المنقطة، العناوين العريضة، والجداول عند الحاجة لتنسيق المعلومات.
+2. كن واقعياً: تجنب الجمل المكررة والمملة، وتحدث بأسلوب مباشر وذكي.
+3. تحليل الملفات: إذا أرفق المستخدم صورة أو ملفاً، قم بتحليله بدقة متناهية وأظهر أنك قرأت محتواه في إجابتك.
+4. اللغات: أجب بنفس لغة المستخدم (العربية هي الافتراضية).
+5. الهوية: أنت فخور بكونك من تطوير حمد العبدولي وتجسد قمة التطور التقني.`;
     const processedMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
     // Helpers (Gemini, OpenAI formatters)
     const formatGeminiParts = (msg: any) => {
-      const parts: any[] = [{ text: msg.content || "يرجى تحليل المحتوى المرفق بدقة:" }];
+      const parts: any[] = [{ text: msg.content || "يرجى تحليل المحتوى المرفق بدقة وإعطاء إجابة مفصلة:" }];
       if (msg.attachments) {
         msg.attachments.forEach((att: any) => {
-          const base64Data = att.data.split(',')[1];
-          parts.push({ inlineData: { data: base64Data, mimeType: att.type } });
+          if (att.type.startsWith('image/')) {
+            const base64Data = att.data.split(',')[1];
+            parts.push({ inlineData: { data: base64Data, mimeType: att.type } });
+          } else {
+            // For text/doc files in Gemini, we append the text to the prompt
+            parts[0].text += `\n\n[محتوى ملف مرفق: ${att.name}]\n${att.data}\n[نهاية الملف]`;
+          }
         });
       }
       return parts;

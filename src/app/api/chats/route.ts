@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     });
 
     // Log the activity to Firebase (non-blocking)
-    logActivity('NEW_CHAT', session.user.email || 'Unknown', `قام ببدء محادثة جديدة: ${title}`);
+    logActivity('SESSION_START', session.user.email || 'User', `بداية جلسة محادثة جديدة: ${title}`);
 
     return NextResponse.json({ id: chatDoc.id, title });
   } catch (error) {
