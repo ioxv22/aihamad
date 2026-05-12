@@ -78,14 +78,6 @@ export default function LoginPage() {
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
               <span>متابعة باستخدام جوجل</span>
             </button>
-            <button 
-              disabled={loading}
-              onClick={() => signIn('github')}
-              className="w-full py-4 glass hover:bg-white/5 rounded-2xl flex items-center justify-center gap-3 font-black transition-all border-white/5 group disabled:opacity-50"
-            >
-              <User className="w-5 h-5" />
-              <span>متابعة باستخدام جيت هب</span>
-            </button>
           </div>
 
           <div className="relative my-8">
