@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/chat/Sidebar';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, Users, MessageSquare, Image as ImageIcon, TrendingUp, Activity, ShieldAlert, Cpu, Settings as SettingsIcon } from 'lucide-react';
 import { AmbientBackground } from '@/components/ui/AmbientBackground';
 import { useSession } from 'next-auth/react';
