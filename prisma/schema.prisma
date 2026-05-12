@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  chats         Chat[]
+  workspaces    Workspace[]
+  workspacesOwned Workspace[] @relation("WorkspaceOwner")
+  subscription  Subscription?
+  usage         UsageAnalytics?
+  settings      Settings?
+  feedback      Feedback[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id          String    @id @default(cuid())
+  title       String
+  userId      String
+  workspaceId String?
+  folderId    String?
+  messages    Message[]
+  isPinned    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id])
+  folder    Folder?    @relation(fields: [folderId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  role      String   // 'user' | 'assistant' | 'system'
+  content   String
+  model     String?
+  files     File[]
+  tokens    Int?
+  createdAt DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  chats     Chat[]
+  createdAt DateTime @default(now())
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  users     User[]
+  chats     Chat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], name: "WorkspaceOwner")
+}
+
+model Subscription {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  plan             String   // 'free' | 'pro' | 'enterprise'
+  status           String
+  stripeCustomerId String?  @unique
+  expiresAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  size      Int
+  type      String
+  messageId String?
+  chatId    String?
+  createdAt DateTime @default(now())
+
+  message Message? @relation(fields: [messageId], references: [id])
+}
+
+model UsageAnalytics {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  totalTokens   Int      @default(0)
+  totalChats    Int      @default(0)
+  totalImages   Int      @default(0)
+  lastUsed      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Settings {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  theme         String   @default("dark")
+  language      String   @default("ar")
+  defaultModel  String   @default("gpt-4-turbo")
+  notifications Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  name      String
+  email     String
+  message   String
+  rating    Int      @default(5)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
