@@ -8,6 +8,8 @@ import { Settings as SettingsIcon, User, Shield, Monitor, Check } from 'lucide-r
 import { AmbientBackground } from '@/components/ui/AmbientBackground';
 import { useSession } from 'next-auth/react';
 
+export const dynamic = 'force-dynamic';
+
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(true);

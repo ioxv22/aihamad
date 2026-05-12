@@ -9,6 +9,8 @@ import { useChatStore } from '@/store/useChatStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 
+export const dynamic = 'force-dynamic';
+
 export default function ChatPage() {
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(true);

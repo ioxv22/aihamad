@@ -8,6 +8,8 @@ import { AmbientBackground } from '@/components/ui/AmbientBackground';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
