@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { NextResponse } from "next/server";
 
 export const authOptions = {
@@ -8,14 +9,41 @@ export const authOptions = {
     strategy: "jwt" as const,
   },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_ID || "",
-      clientSecret: process.env.GITHUB_SECRET || "",
-    }),
+    // 1. Google Provider (Conditional)
+    ...(process.env.GOOGLE_CLIENT_ID ? [
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      })
+    ] : []),
+    
+    // 2. GitHub Provider (Conditional)
+    ...(process.env.GITHUB_ID ? [
+      GithubProvider({
+        clientId: process.env.GITHUB_ID,
+        clientSecret: process.env.GITHUB_SECRET || "",
+      })
+    ] : []),
+
+    // 3. Credentials Provider (Fallback / Demo)
+    CredentialsProvider({
+      name: "Email",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // For now, allow any login for demo purposes
+        if (credentials?.email) {
+          return {
+            id: credentials.email,
+            name: credentials.email.split('@')[0],
+            email: credentials.email,
+          };
+        }
+        return null;
+      }
+    })
   ],
   callbacks: {
     async jwt({ token, user }: any) {
@@ -31,6 +59,7 @@ export const authOptions = {
       return session;
     },
   },
+  secret: process.env.NEXTAUTH_SECRET || "aura_fallback_secret_123",
   events: {
     async signIn({ user }: any) {
         try {

@@ -57,20 +57,44 @@ export default function LoginPage() {
             <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-4 opacity-30 font-black tracking-widest">أو</span></div>
           </div>
 
-          <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+          <form 
+            className="space-y-5" 
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const email = (e.target as any).email.value;
+              const password = (e.target as any).password.value;
+              await signIn('credentials', { email, password, callbackUrl: '/chat' });
+            }}
+          >
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">البريد الإلكتروني</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-30 group-focus-within:opacity-100 transition-opacity" />
                 <input 
                   type="email" 
+                  name="email"
+                  required
                   placeholder="name@example.com"
                   className="w-full pl-12 pr-6 py-4 glass rounded-2xl border-white/5 focus:border-accent/40 focus:ring-0 transition-all font-bold"
                 />
               </div>
             </div>
 
-            <button className="w-full py-5 premium-gradient text-white rounded-2xl font-black text-lg shadow-2xl shadow-accent/30 hover:translate-y-[-4px] transition-all flex items-center justify-center gap-3">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">كلمة المرور</label>
+              <div className="relative group">
+                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-30 group-focus-within:opacity-100 transition-opacity" />
+                <input 
+                  type="password" 
+                  name="password"
+                  required
+                  placeholder="••••••••"
+                  className="w-full pl-12 pr-6 py-4 glass rounded-2xl border-white/5 focus:border-accent/40 focus:ring-0 transition-all font-bold"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="w-full py-5 premium-gradient text-white rounded-2xl font-black text-lg shadow-2xl shadow-accent/30 hover:translate-y-[-4px] transition-all flex items-center justify-center gap-3">
               <span>{isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}</span>
               <ArrowRight className="w-5 h-5" />
             </button>
