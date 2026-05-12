@@ -1,10 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { NextResponse } from "next/server";
 
 export const authOptions = {
   session: {
@@ -35,9 +32,7 @@ export const authOptions = {
     },
   },
   events: {
-    async signIn({ user, account, profile }: any) {
-        // We can't import logActivity here easily because of server/client boundary or top-level await issues in some environments
-        // But since this is a route, we can try.
+    async signIn({ user }: any) {
         try {
             const { logActivity } = await import("@/lib/logger");
             await logActivity('SIGNIN', user.email || 'Unknown', `قام بتسجيل الدخول إلى النظام`);
