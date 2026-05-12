@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 import { Sidebar } from '@/components/chat/Sidebar';
 import { motion } from 'framer-motion';
 import { Settings as SettingsIcon, User, Shield, Monitor, Check } from 'lucide-react';
@@ -10,6 +11,12 @@ export default function SettingsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const tabs = [
     { id: 'profile', label: 'الملف الشخصي', icon: <User className="w-4 h-4" /> },
@@ -125,22 +132,29 @@ export default function SettingsPage() {
                     <div className="space-y-10">
                        <h3 className="text-2xl font-black px-4">تخصيص المظهر</h3>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="p-6 glass border-accent/20 rounded-2xl flex items-center justify-between group cursor-pointer">
+                          <div 
+                            onClick={() => setTheme('dark')}
+                            className={`p-6 glass rounded-2xl flex items-center justify-between group cursor-pointer transition-all ${mounted && theme === 'dark' ? 'border-accent/40 bg-accent/5' : 'border-white/5 opacity-50 hover:opacity-100'}`}
+                          >
                              <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center border border-white/10">
                                    <Monitor className="w-5 h-5" />
                                 </div>
                                 <span className="font-black">الوضع الليلي (Dark)</span>
                              </div>
-                             <Check className="w-5 h-5 text-accent" />
+                             {mounted && theme === 'dark' && <Check className="w-5 h-5 text-accent" />}
                           </div>
-                          <div className="p-6 glass rounded-2xl border-white/5 flex items-center justify-between opacity-40 hover:opacity-100 cursor-pointer transition-all">
+                          <div 
+                            onClick={() => setTheme('light')}
+                            className={`p-6 glass rounded-2xl flex items-center justify-between group cursor-pointer transition-all ${mounted && theme === 'light' ? 'border-accent/40 bg-accent/5' : 'border-white/5 opacity-50 hover:opacity-100'}`}
+                          >
                              <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-black/10">
                                    <Monitor className="w-5 h-5 text-black" />
                                 </div>
                                 <span className="font-black">الوضع النهاري (Light)</span>
                              </div>
+                             {mounted && theme === 'light' && <Check className="w-5 h-5 text-accent" />}
                           </div>
                        </div>
                     </div>
