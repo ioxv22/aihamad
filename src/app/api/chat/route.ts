@@ -179,9 +179,9 @@ export async function POST(req: Request) {
     let targetModel = model;
 
     // Smart Fallback Logic: If Gemini is selected but no key, switch to GitHub/OpenAI
-    if (model.includes("gemini") && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    if (targetModel.includes("gemini") && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       console.log("Gemini key missing, falling back to GitHub/OpenAI");
-      useGitHub = true;
+      useGitHub = Boolean(githubToken);
       targetModel = "gpt-4o";
     }
 
@@ -238,7 +238,7 @@ export async function POST(req: Request) {
       });
 
       const response = await client.chat.completions.create({
-        model: useGitHub ? "gpt-4o" : targetModel,
+        model: (useGitHub || !targetModel.startsWith("gpt-")) ? "gpt-4o" : targetModel,
         messages: formatOpenAIMessages(processedMessages),
         stream: true,
       });
