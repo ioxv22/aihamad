@@ -9,23 +9,6 @@ export const authOptions = {
     strategy: "jwt" as const,
   },
   providers: [
-    // 1. Google Provider (Conditional)
-    ...(process.env.GOOGLE_CLIENT_ID ? [
-      GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      })
-    ] : []),
-    
-    // 2. GitHub Provider (Conditional)
-    ...(process.env.GITHUB_ID ? [
-      GithubProvider({
-        clientId: process.env.GITHUB_ID,
-        clientSecret: process.env.GITHUB_SECRET || "",
-      })
-    ] : []),
-
-    // 3. Credentials Provider (Fallback / Demo)
     CredentialsProvider({
       name: "Email",
       credentials: {
@@ -33,7 +16,6 @@ export const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // For now, allow any login for demo purposes
         if (credentials?.email) {
           return {
             id: credentials.email,
@@ -43,41 +25,32 @@ export const authOptions = {
         }
         return null;
       }
-    })
+    }),
+    ...(process.env.GOOGLE_CLIENT_ID ? [
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      })
+    ] : []),
+    ...(process.env.GITHUB_ID ? [
+      GithubProvider({
+        clientId: process.env.GITHUB_ID,
+        clientSecret: process.env.GITHUB_SECRET || "",
+      })
+    ] : []),
   ],
   callbacks: {
     async jwt({ token, user }: any) {
-      if (user) {
-        token.id = user.id;
-      }
+      if (user) token.id = user.id;
       return token;
     },
     async session({ session, token }: any) {
-      if (session.user) {
-        session.user.id = token.id;
-      }
+      if (session.user) session.user.id = token.id;
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || "aura_fallback_secret_123",
-  events: {
-    async signIn({ user }: any) {
-        try {
-            const { logActivity } = await import("@/lib/logger");
-            await logActivity('SIGNIN', user.email || 'Unknown', `قام بتسجيل الدخول إلى النظام`);
-        } catch (e) {
-            console.error("Failed to log signin", e);
-        }
-    },
-    async createUser({ user }: any) {
-        try {
-            const { logActivity } = await import("@/lib/logger");
-            await logActivity('SIGNUP', user.email || 'Unknown', `قام بإنشاء حساب جديد`);
-        } catch (e) {
-            console.error("Failed to log signup", e);
-        }
-    }
-  },
+  secret: process.env.NEXTAUTH_SECRET || "aura_fallback_secret_123456",
+  debug: true, // Enable debug logs in Vercel to see what's happening
   pages: {
     signIn: '/login',
   },

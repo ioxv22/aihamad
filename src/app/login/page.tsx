@@ -24,20 +24,17 @@ export default function LoginPage() {
       const email = target.email.value;
       const password = target.password.value;
 
-      const res = await signIn('credentials', {
+      console.log("Attempting login for:", email);
+      
+      // Let NextAuth handle the redirect naturally to avoid CSRF/Protocol issues
+      await signIn('credentials', {
         email,
         password,
-        redirect: false,
+        callbackUrl: '/chat',
       });
-
-      if (res?.error) {
-        setError('خطأ في تهيئة السيرفر. تأكد من إعداد المفاتيح في Vercel/Netlify');
-        setLoading(false);
-      } else {
-        router.push('/chat');
-      }
     } catch (err) {
-      setError('حدث خطأ غير متوقع');
+      console.error("Login Error:", err);
+      setError('حدث خطأ غير متوقع أثناء الدخول');
       setLoading(false);
     }
   };
