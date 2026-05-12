@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Plus, MessageSquare, Trash2, Settings, LogOut, ChevronLeft, Bot, Sparkles, FolderOpen, History, Star } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Settings, LogOut, ChevronLeft, Bot, Sparkles, FolderOpen, History, Star, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,26 +12,34 @@ import { signOut } from 'next-auth/react';
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  isAdmin?: boolean;
 }
 
-export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
+export function Sidebar({ isOpen, setIsOpen, isAdmin }: SidebarProps) {
   const pathname = usePathname();
   const [chats, setChats] = useState<any[]>([]);
-  const { currentChatId, setCurrentChatId, clearMessages } = useChatStore();
+  const deleteChat = async (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    if (!window.confirm("هل أنت متأكد من حذف هذه المحادثة؟")) return;
 
-  useEffect(() => {
-    fetch('/api/chats')
-      .then(res => res.json())
-      .then(data => setChats(Array.isArray(data) ? data : []));
-  }, []);
+    try {
+      const res = await fetch(`/api/chats/${chatId}`, {
+        method: 'DELETE',
+      });
 
-  const createNewChat = () => {
-    setCurrentChatId(null);
-    clearMessages();
-  };
-
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/login' });
+      if (res.ok) {
+        setChats(prev => prev.filter(c => c.id !== chatId));
+        if (currentChatId === chatId) {
+          setCurrentChatId(null);
+          clearMessages();
+        }
+      } else {
+        const error = await res.json();
+        alert(error.error || "فشل حذف المحادثة");
+      }
+    } catch (err) {
+      console.error("Delete Chat Error:", err);
+    }
   };
 
   return (
@@ -96,22 +104,40 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 <span className={cn("flex-1 text-sm font-bold truncate", chat.id === currentChatId ? "opacity-100" : "opacity-50 group-hover:opacity-100")}>
                   {chat.title}
                 </span>
-                <Trash2 className="w-4 h-4 text-red-500/50 opacity-0 group-hover:opacity-100 transition-all hover:text-red-500" />
+                <Trash2 
+                  onClick={(e) => deleteChat(e, chat.id)}
+                  className="w-4 h-4 text-red-500/50 opacity-0 group-hover:opacity-100 transition-all hover:text-red-500" 
+                />
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Footer Actions */}
       <div className="p-6 border-t border-white/5 space-y-4">
+        {isAdmin && (
+          <Link href="/admin" className={cn(
+            "flex items-center gap-3 px-4 py-2 opacity-50 hover:opacity-100 transition-all font-black text-sm group",
+            pathname === '/admin' && "opacity-100 text-accent"
+          )}>
+            <LayoutDashboard className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <span>لوحة التحكم</span>
+          </Link>
+        )}
 
-        <Link href="/settings" className="flex items-center gap-3 px-4 py-2 opacity-50 hover:opacity-100 transition-all font-black text-sm group">
+        <Link href="/settings" className={cn(
+          "flex items-center gap-3 px-4 py-2 opacity-50 hover:opacity-100 transition-all font-black text-sm group",
+          pathname === '/settings' && "opacity-100 text-accent"
+        )}>
           <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
           <span>الإعدادات</span>
         </Link>
-        <button className="flex items-center gap-3 px-4 py-2 text-red-500 opacity-50 hover:opacity-100 transition-all font-black text-sm">
-          <LogOut className="w-5 h-5" />
+        
+        <button 
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="flex items-center gap-3 px-4 py-2 text-red-500 opacity-50 hover:opacity-100 transition-all font-black text-sm group w-full"
+        >
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span>تسجيل الخروج</span>
         </button>
         

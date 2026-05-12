@@ -7,6 +7,7 @@ import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/fi
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logActivity } from "@/lib/logger";
+import { runFusionEngine } from "@/lib/fusion";
 
 export async function POST(req: Request) {
   try {
@@ -39,9 +40,62 @@ export async function POST(req: Request) {
       logActivity('INTERACTION', session.user.email || 'User', `User requested assistance with: ${lastMessage.content.substring(0, 50)}...`);
     }
 
-    // --- INTEGRATED IMAGE GENERATION ---
+    // --- INTEGRATED IMAGE GENERATION & EXTERNAL MODELS ---
     const imageKeywords = ["ارسم", "صورة", "draw", "generate image", "image of", "تخيل"];
-    if (imageKeywords.some(kw => lastMessage.content.toLowerCase().includes(kw)) && openaiKey) {
+    const isImageRequest = imageKeywords.some(kw => lastMessage.content.toLowerCase().includes(kw));
+
+    if (model === "kilwa-img" || (isImageRequest && !openaiKey)) {
+      const res = await fetch(`http://de3.bot-hosting.net:21007/kilwa-gpt-img?text=${encodeURIComponent(lastMessage.content)}`);
+      const data = await res.json();
+      if (data.status === "success" && data.image_url) {
+        return NextResponse.json({ 
+          role: "assistant", 
+          content: "لقد قمت بتوليد هذه الصورة لك عبر محرك Aura Image Gen:",
+          imageUrl: data.image_url 
+        });
+      }
+    }
+
+    if (model === "flux-pro" || model === "flux-img") {
+      const imageUrl = `https://helm-api.vercel.app/api/ai-img/flux2/?text=${encodeURIComponent(lastMessage.content)}`;
+      return NextResponse.json({ 
+        role: "assistant", 
+        content: "لقد قمت بتوليد هذه الصورة لك عبر محرك Aura Flux Pro (Hamad Al Abdali):",
+        imageUrl: imageUrl 
+      });
+    }
+
+    if (model === "gpt-5-nano") {
+      const res = await fetch(`http://de3.bot-hosting.net:21007/kilwa-chatgpt?text=${encodeURIComponent(lastMessage.content)}`);
+      const data = await res.json();
+      if (data.status === "success") {
+        return NextResponse.json({ 
+          role: "assistant", 
+          content: data.reply.replace(/KILWA|@K_I_L_W_A10|GPT-5 Nano/g, "Aura GPT-5 Nano (بإشراف حمد العبدولي)")
+        });
+      }
+    }
+
+    if (model === "redfox-fusion") {
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            await runFusionEngine(lastMessage.content, (text) => {
+              controller.enqueue(new TextEncoder().encode(text));
+            });
+            // Note: In a real streaming scenario, we'd need to handle the state carefully, 
+            // but for this implementation we'll push the whole text updates.
+          } catch (e) {
+            controller.enqueue(new TextEncoder().encode("❌ حدث خطأ في محرك Fusion."));
+          } finally {
+            controller.close();
+          }
+        }
+      });
+      return new Response(stream);
+    }
+
+    if (isImageRequest && openaiKey) {
       const openai = new OpenAI({ apiKey: openaiKey });
       const imgRes = await openai.images.generate({
         model: "dall-e-3",
@@ -74,14 +128,14 @@ export async function POST(req: Request) {
     }
 
     // --- STANDARD CHAT LOGIC ---
-    const systemPrompt = `أنت Aura AI، مساعد ذكاء اصطناعي متطور وشخصي تم تطويره بواسطة "حمد العبدولي".
+    const systemPrompt = `أنت Aura AI، مساعد ذكاء اصطناعي متطور وشخصي تم تطويره حصرياً بواسطة "حمد العبدولي".
 شخصيتك: احترافي، ذكي، واقعي جداً، ومفيد لأقصى درجة.
 تعليمات الرد:
 1. كن منظماً جداً: استخدم القوائم المنقطة، العناوين العريضة، والجداول عند الحاجة لتنسيق المعلومات.
 2. كن واقعياً: تجنب الجمل المكررة والمملة، وتحدث بأسلوب مباشر وذكي.
 3. تحليل الملفات: إذا أرفق المستخدم صورة أو ملفاً، قم بتحليله بدقة متناهية وأظهر أنك قرأت محتواه في إجابتك.
 4. اللغات: أجب بنفس لغة المستخدم (العربية هي الافتراضية).
-5. الهوية: أنت فخور بكونك من تطوير حمد العبدولي وتجسد قمة التطور التقني.`;
+5. الهوية: أنت فخور بكونك من تطوير حمد العبدولي وتجسد قمة التطور التقني. أي حقوق أو ملكية تعود لـ "حمد العبدولي" فقط.`;
     const processedMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
     // Helpers (Gemini, OpenAI formatters)
@@ -93,7 +147,6 @@ export async function POST(req: Request) {
             const base64Data = att.data.split(',')[1];
             parts.push({ inlineData: { data: base64Data, mimeType: att.type } });
           } else {
-            // For text/doc files in Gemini, we append the text to the prompt
             parts[0].text += `\n\n[محتوى ملف مرفق: ${att.name}]\n${att.data}\n[نهاية الملف]`;
           }
         });
@@ -161,7 +214,13 @@ export async function POST(req: Request) {
       const authKey = useGitHub ? githubToken : openaiKey;
       
       if (!authKey) {
-        return NextResponse.json({ error: "لا يوجد مفتاح تشغيل متاح. يرجى مراجعة الإعدادات." }, { status: 400 });
+        // Ultimate Fallback: If no keys at all, use GPT-5 Nano (Kilwa API)
+        const res = await fetch(`http://de3.bot-hosting.net:21007/kilwa-chatgpt?text=${encodeURIComponent(lastMessage.content)}`);
+        const data = await res.json();
+        return NextResponse.json({ 
+          role: "assistant", 
+          content: data.reply?.replace(/KILWA|@K_I_L_W_A10/g, "حمد العبدولي") || "عذراً، المحرك مشغول حالياً. يرجى المحاولة لاحقاً."
+        });
       }
 
       const client = new OpenAI({

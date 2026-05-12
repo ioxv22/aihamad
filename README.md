@@ -7,9 +7,9 @@ Aura AI is a high-end, production-ready AI platform built with Next.js 15, featu
 - **Cinematic UI/UX**: Ultra-modern glassmorphism design with fluid animations.
 - **Real-time Streaming**: Powered by Google Gemini 1.5 Pro and OpenAI GPT-4.
 - **Multi-Model Support**: Switch between different AI models on the fly.
-- **Aura Vision**: Advanced AI image generation interface.
-- **Smart Workspaces**: Organize your chats and projects efficiently.
-- **Admin Terminal**: Comprehensive usage analytics and system monitoring.
+- **RedFox Fusion Engine**: Exclusive 6-stage AI pipeline for high-quality code generation.
+- **GPT-5 Nano**: Ultra-fast intelligence powered by Kilwa API integration.
+- **Aura Flux Pro**: Next-gen realistic image generation via Helm API.
 - **Responsive Design**: Mobile-first approach, fully optimized for all devices.
 
 ## 🚀 Tech Stack

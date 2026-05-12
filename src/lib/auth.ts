@@ -30,11 +30,17 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user }: any) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        token.isAdmin = user.email === (process.env.ADMIN_EMAIL || 'hk102573@gmail.com');
+      }
       return token;
     },
     async session({ session, token }: any) {
-      if (session.user) session.user.id = token.id;
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.isAdmin = token.isAdmin;
+      }
       return session;
     },
   },

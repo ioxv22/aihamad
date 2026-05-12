@@ -7,8 +7,10 @@ import { MessageInput } from '@/components/chat/MessageInput';
 import { Menu, Sparkles, Bot, Settings as SettingsIcon } from 'lucide-react';
 import { useChatStore } from '@/store/useChatStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 
 export default function ChatPage() {
+  const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { messages, addMessage, setMessages, isLoading, setLoading, activeModel, currentChatId, setCurrentChatId } = useChatStore();
   const [currentResponse, setCurrentResponse] = useState('');
@@ -184,7 +186,11 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground selection:bg-accent/30">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        setIsOpen={setSidebarOpen} 
+        isAdmin={(session?.user as any)?.isAdmin} 
+      />
 
       <main className="flex-1 flex flex-col relative overflow-hidden">
         {/* Top Header Bar */}
@@ -208,6 +214,11 @@ export default function ChatPage() {
                 onChange={(e) => useChatStore.getState().setActiveModel(e.target.value)}
                 className="bg-white/5 text-[11px] font-black uppercase tracking-tighter border border-white/10 rounded-lg px-2 py-1 focus:ring-accent focus:border-accent cursor-pointer hover:bg-white/10 transition-all outline-none"
               >
+                <optgroup label="Aura Special Systems" className="bg-[#0f0f0f]">
+                  <option value="redfox-fusion">RedFox Fusion Engine (6 Stages)</option>
+                  <option value="gpt-5-nano">GPT-5 Nano (Ultra Fast)</option>
+                  <option value="flux-pro">Flux Pro (Realistic Gen)</option>
+                </optgroup>
                 <optgroup label="Google Intelligence" className="bg-[#0f0f0f]">
                   <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
                   <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
@@ -220,7 +231,6 @@ export default function ChatPage() {
                   <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
                 </optgroup>
                 <optgroup label="Experimental Systems" className="bg-[#0f0f0f]">
-                  <option value="gpt-5">GPT-5 (Ultra)</option>
                   <option value="deepseek">DeepSeek R1</option>
                   <option value="grok">Grok-1 (xAI)</option>
                 </optgroup>

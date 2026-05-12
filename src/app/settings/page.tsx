@@ -6,8 +6,10 @@ import { Sidebar } from '@/components/chat/Sidebar';
 import { motion } from 'framer-motion';
 import { Settings as SettingsIcon, User, Shield, Monitor, Check } from 'lucide-react';
 import { AmbientBackground } from '@/components/ui/AmbientBackground';
+import { useSession } from 'next-auth/react';
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -31,7 +33,11 @@ export default function SettingsPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        setIsOpen={setSidebarOpen} 
+        isAdmin={(session?.user as any)?.isAdmin} 
+      />
       
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <AmbientBackground />
