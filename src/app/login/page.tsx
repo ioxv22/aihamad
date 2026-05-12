@@ -8,6 +8,8 @@ import { AmbientBackground } from '@/components/ui/AmbientBackground';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
+import { auth } from '@/lib/firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 function LoginContent() {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,16 +21,37 @@ function LoginContent() {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam) {
-      if (errorParam === 'OAuthSignin' || errorParam === 'google') 
-        setError('فشل الاتصال بجوجل: تأكد من صحة المفاتيح (Client ID/Secret) في Vercel.');
-      else if (errorParam === 'OAuthCallback') 
-        setError('خطأ في روابط الـ Redirect: تأكد من إضافة الرابط في Google Console.');
-      else if (errorParam === 'CredentialsSignin') 
-        setError('خطأ في البريد أو كلمة المرور.');
-      else 
-        setError(`حدث خطأ تقني: ${errorParam}`);
+      if (errorParam === 'CredentialsSignin') setError('خطأ في البريد أو كلمة المرور.');
+      else setError(`حدث تنبيه: ${errorParam}`);
     }
   }, [searchParams]);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      if (user.email) {
+        // Now "bridge" to NextAuth session
+        await signIn('credentials', {
+          email: user.email,
+          password: 'google_authenticated_via_firebase',
+          callbackUrl: '/chat',
+        });
+      }
+    } catch (err: any) {
+      console.error("Firebase Login Error:", err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('تم إغلاق نافذة الدخول قبل الإكمال.');
+      } else {
+        setError('فشل الدخول عبر جوجل: تأكد من تفعيل Google في لوحة تحكم Firebase.');
+      }
+      setLoading(false);
+    }
+  };
 
   const handleCredentialsLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,11 +111,17 @@ function LoginContent() {
           <div className="space-y-4">
             <button 
               disabled={loading}
-              onClick={() => signIn('google', { callbackUrl: '/chat' })}
+              onClick={handleGoogleLogin}
               className="w-full py-4 glass hover:bg-white/5 rounded-2xl flex items-center justify-center gap-3 font-black transition-all border-white/5 group disabled:opacity-50"
             >
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-              <span>متابعة باستخدام جوجل</span>
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+                  <span>متابعة باستخدام جوجل</span>
+                </>
+              )}
             </button>
           </div>
 
