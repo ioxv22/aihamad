@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { logActivity } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
           model: model,
         }
       });
+      await logActivity('NEW_MESSAGE', session.user.email || 'Unknown', `أرسل رسالة جديدة: ${lastMessage.content.substring(0, 50)}...`);
     }
 
     // --- INTEGRATED IMAGE GENERATION ---
@@ -49,6 +51,7 @@ export async function POST(req: Request) {
             model: "dalle-3",
           }
         });
+        await logActivity('IMAGE_GEN', session.user.email || 'Unknown', `قام بتوليد صورة باستخدام DALL-E 3`);
       }
 
       return NextResponse.json({ 
@@ -118,6 +121,7 @@ export async function POST(req: Request) {
             await prisma.message.create({
               data: { chatId, role: "assistant", content: fullText, model }
             });
+            await logActivity('AI_RESPONSE', 'System', `تمت معالجة رد بنجاح باستخدام ${model}`);
           }
           controller.close();
         },
@@ -154,6 +158,7 @@ export async function POST(req: Request) {
             await prisma.message.create({
               data: { chatId, role: "assistant", content: fullText, model }
             });
+            await logActivity('AI_RESPONSE', 'System', `تمت معالجة رد بنجاح باستخدام ${model}`);
           }
           controller.close();
         },
