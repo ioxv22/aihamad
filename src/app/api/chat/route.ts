@@ -66,13 +66,15 @@ export async function POST(req: Request) {
     }
 
     if (model === "gpt-5-nano") {
-      const res = await fetch(`http://de3.bot-hosting.net:21007/kilwa-chatgpt?text=${encodeURIComponent(lastMessage.content)}`);
-      const data = await res.json();
-      if (data.status === "success") {
+      try {
+        const res = await fetch(`https://kilwa-chatgpt.vercel.app/api/chat?text=${encodeURIComponent(lastMessage.content)}`);
+        const data = await res.json();
         return NextResponse.json({ 
           role: "assistant", 
-          content: data.reply.replace(/KILWA|@K_I_L_W_A10|GPT-5 Nano/g, "Aura GPT-5 Nano (بإشراف حمد العبدولي)")
+          content: data.reply?.replace(/KILWA|@K_I_L_W_A10|GPT-5 Nano/g, "Aura GPT-5 Nano (بإشراف حمد العبدولي)") || "عذراً، المحرك مشغول حالياً."
         });
+      } catch (e) {
+        console.error("GPT-5 Nano Error:", e);
       }
     }
 
@@ -214,13 +216,20 @@ export async function POST(req: Request) {
       const authKey = useGitHub ? githubToken : openaiKey;
       
       if (!authKey) {
-        // Ultimate Fallback: If no keys at all, use GPT-5 Nano (Kilwa API)
-        const res = await fetch(`http://de3.bot-hosting.net:21007/kilwa-chatgpt?text=${encodeURIComponent(lastMessage.content)}`);
-        const data = await res.json();
-        return NextResponse.json({ 
-          role: "assistant", 
-          content: data.reply?.replace(/KILWA|@K_I_L_W_A10/g, "حمد العبدولي") || "عذراً، المحرك مشغول حالياً. يرجى المحاولة لاحقاً."
-        });
+        // Ultimate Fallback: If no keys at all, use Kilwa API
+        try {
+          const res = await fetch(`https://kilwa-chatgpt.vercel.app/api/chat?text=${encodeURIComponent(lastMessage.content)}`);
+          const data = await res.json();
+          return NextResponse.json({ 
+            role: "assistant", 
+            content: data.reply?.replace(/KILWA|@K_I_L_W_A10/g, "حمد العبدولي") || "عذراً، نظام الأتمتة تحت الصيانة حالياً (تأكد من إضافة مفاتيح API في إعدادات Vercel)."
+          });
+        } catch (e) {
+          return NextResponse.json({ 
+            role: "assistant", 
+            content: "⚠️ تنبيه: لم يتم العثور على مفاتيح API مفعلة في النظام، ومحرك الطوارئ غير متاح. يرجى مراجعة إعدادات Vercel."
+          });
+        }
       }
 
       const client = new OpenAI({

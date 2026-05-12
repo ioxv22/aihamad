@@ -14,6 +14,7 @@ const API_URL = "https://zeneath.vectorion.in/app/newapi/api2.php";
 
 async function callRedFoxModel(modelKey: string, prompt: string) {
     try {
+        console.log(`Calling RedFox ${modelKey}...`);
         const res = await fetch(API_URL, {
             method: 'POST',
             headers: REDFOX_HEADERS,
@@ -28,6 +29,8 @@ async function callRedFoxModel(modelKey: string, prompt: string) {
             })
         });
         
+        if (!res.ok) throw new Error(`API returned ${res.status}`);
+
         const reader = res.body?.getReader();
         let result = "";
         if (reader) {
@@ -46,10 +49,10 @@ async function callRedFoxModel(modelKey: string, prompt: string) {
                 }
             }
         }
-        return result;
+        return result || "(لم يتم الحصول على رد من هذا الموديل)";
     } catch (e) {
         console.error(`RedFox ${modelKey} Error:`, e);
-        return "";
+        return `(خطأ في المرحلة: ${modelKey})`;
     }
 }
 
