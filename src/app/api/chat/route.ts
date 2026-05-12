@@ -109,14 +109,13 @@ export async function POST(req: Request) {
 
     // --- EXECUTE AI CALL ---
     let stream;
-    let finalKey = openaiKey;
-    let useGitHub = !openaiKey && githubToken;
+    let useGitHub = Boolean(!openaiKey && githubToken);
     let targetModel = model;
 
     // Smart Fallback Logic: If Gemini is selected but no key, switch to GitHub/OpenAI
     if (model.includes("gemini") && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       console.log("Gemini key missing, falling back to GitHub/OpenAI");
-      useGitHub = !!githubToken;
+      useGitHub = true;
       targetModel = "gpt-4o";
     }
 
