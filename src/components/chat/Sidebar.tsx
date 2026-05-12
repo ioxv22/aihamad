@@ -109,15 +109,6 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
       {/* Footer Actions */}
       <div className="p-6 border-t border-white/5 space-y-4">
-        <div className="glass rounded-2xl p-4 flex items-center gap-4 border-white/5 mb-4 group hover:border-accent/20 transition-all cursor-pointer">
-           <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-              <Star className="w-5 h-5 text-accent" />
-           </div>
-           <div className="flex flex-col">
-              <span className="text-xs font-black">Aura Unlimited</span>
-              <span className="text-[9px] font-bold opacity-40">ترقية إلى الاشتراك المميز</span>
-           </div>
-        </div>
 
         <Link href="/settings" className="flex items-center gap-3 px-4 py-2 opacity-50 hover:opacity-100 transition-all font-black text-sm group">
           <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />

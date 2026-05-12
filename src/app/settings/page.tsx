@@ -3,19 +3,24 @@
 import { useState } from 'react';
 import { Sidebar } from '@/components/chat/Sidebar';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, User, CreditCard, Bell, Shield, Globe, Monitor, Zap, Check } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Monitor, Check } from 'lucide-react';
 import { AmbientBackground } from '@/components/ui/AmbientBackground';
 
 export default function SettingsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const tabs = [
     { id: 'profile', label: 'الملف الشخصي', icon: <User className="w-4 h-4" /> },
-    { id: 'billing', label: 'الاشتراكات والدفع', icon: <CreditCard className="w-4 h-4" /> },
     { id: 'security', label: 'الأمان والخصوصية', icon: <Shield className="w-4 h-4" /> },
     { id: 'appearance', label: 'المظهر', icon: <Monitor className="w-4 h-4" /> },
   ];
+
+  const handleSave = () => {
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -83,41 +88,59 @@ export default function SettingsPage() {
                           </div>
                        </div>
 
-                       <button className="px-10 py-4 premium-gradient text-white rounded-2xl font-black text-sm shadow-2xl shadow-accent/20">
-                          حفظ التغييرات
+                       <button 
+                         onClick={handleSave}
+                         className="px-10 py-4 premium-gradient text-white rounded-2xl font-black text-sm shadow-2xl shadow-accent/20 flex items-center gap-2"
+                       >
+                          {saveSuccess ? <><Check className="w-4 h-4" /> تم الحفظ</> : 'حفظ التغييرات'}
                        </button>
                     </div>
                   )}
 
-                  {activeTab === 'billing' && (
+                  {activeTab === 'security' && (
                     <div className="space-y-10">
-                       <div className="p-8 glass bg-accent/5 rounded-[2.5rem] border-accent/20 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 blur-3xl" />
-                          <div className="z-10 text-center md:text-right">
-                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-white text-[9px] font-black uppercase mb-4 tracking-widest">Active Plan</div>
-                             <h3 className="text-4xl font-black mb-2 flex items-center justify-center md:justify-start gap-3">
-                                Aura Pro 
-                                <Zap className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                             </h3>
-                             <p className="opacity-50 font-bold">يتم التجديد تلقائياً في 15 يونيو 2026</p>
+                       <h3 className="text-2xl font-black px-4">إعدادات الأمان</h3>
+                       <div className="grid grid-cols-1 gap-4">
+                          <div className="p-6 glass rounded-2xl border-white/5 flex items-center justify-between">
+                             <div className="flex flex-col gap-1">
+                                <span className="font-black">المصادقة الثنائية (2FA)</span>
+                                <span className="text-[10px] font-bold opacity-30">تأمين حسابك بطبقة حماية إضافية</span>
+                             </div>
+                             <div className="w-12 h-6 glass rounded-full relative p-1 cursor-pointer">
+                                <div className="w-4 h-4 bg-green-500 rounded-full translate-x-6" />
+                             </div>
                           </div>
-                          <div className="z-10">
-                             <div className="text-4xl font-black mb-1">$49.00<span className="text-lg opacity-30">/mo</span></div>
-                             <p className="opacity-40 text-xs font-bold">شامل جميع المميزات المتقدمة</p>
+                          <div className="p-6 glass rounded-2xl border-white/5 flex items-center justify-between">
+                             <div className="flex flex-col gap-1">
+                                <span className="font-black">سجل الدخول</span>
+                                <span className="text-[10px] font-bold opacity-30">عرض جميع الأجهزة التي سجلت الدخول بحسابك</span>
+                             </div>
+                             <button className="px-4 py-2 glass hover:bg-white/5 rounded-xl text-xs font-black transition-all">عرض الكل</button>
                           </div>
                        </div>
+                    </div>
+                  )}
 
-                       <div className="space-y-6">
-                          <h4 className="text-xl font-black px-4">طرق الدفع</h4>
-                          <div className="p-6 glass rounded-2xl border-white/5 flex items-center justify-between group cursor-pointer hover:border-white/10 transition-all">
+                  {activeTab === 'appearance' && (
+                    <div className="space-y-10">
+                       <h3 className="text-2xl font-black px-4">تخصيص المظهر</h3>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="p-6 glass border-accent/20 rounded-2xl flex items-center justify-between group cursor-pointer">
                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-8 glass rounded-lg flex items-center justify-center font-bold text-xs">VISA</div>
-                                <div className="flex flex-col">
-                                   <span className="text-sm font-black">•••• •••• •••• 4242</span>
-                                   <span className="text-[10px] font-bold opacity-30">تاريخ الانتهاء: 12/28</span>
+                                <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center border border-white/10">
+                                   <Monitor className="w-5 h-5" />
                                 </div>
+                                <span className="font-black">الوضع الليلي (Dark)</span>
                              </div>
-                             <Check className="w-5 h-5 text-green-500" />
+                             <Check className="w-5 h-5 text-accent" />
+                          </div>
+                          <div className="p-6 glass rounded-2xl border-white/5 flex items-center justify-between opacity-40 hover:opacity-100 cursor-pointer transition-all">
+                             <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-black/10">
+                                   <Monitor className="w-5 h-5 text-black" />
+                                </div>
+                                <span className="font-black">الوضع النهاري (Light)</span>
+                             </div>
                           </div>
                        </div>
                     </div>
