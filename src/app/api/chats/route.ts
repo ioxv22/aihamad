@@ -14,7 +14,6 @@ export async function GET() {
     const q = query(
       chatsRef, 
       where("userId", "==", session.user.id),
-      orderBy("updatedAt", "desc"),
       limit(20)
     );
     
@@ -46,8 +45,8 @@ export async function POST(req: Request) {
       updatedAt: serverTimestamp()
     });
 
-    // Log the activity to Firebase
-    await logActivity('NEW_CHAT', session.user.email || 'Unknown', `قام ببدء محادثة جديدة: ${title}`);
+    // Log the activity to Firebase (non-blocking)
+    logActivity('NEW_CHAT', session.user.email || 'Unknown', `قام ببدء محادثة جديدة: ${title}`);
 
     return NextResponse.json({ id: chatDoc.id, title });
   } catch (error) {

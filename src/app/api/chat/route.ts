@@ -37,7 +37,8 @@ export async function POST(req: Request) {
       const chatRef = doc(db, "chats", chatId);
       await updateDoc(chatRef, { updatedAt: serverTimestamp() });
 
-      await logActivity('NEW_MESSAGE', session.user.email || 'Unknown', `أرسل رسالة جديدة: ${lastMessage.content.substring(0, 50)}...`);
+      // Log the activity to Firebase (non-blocking)
+      logActivity('NEW_MESSAGE', session.user.email || 'Unknown', `أرسل رسالة جديدة: ${lastMessage.content.substring(0, 50)}...`);
     }
 
     // --- INTEGRATED IMAGE GENERATION ---
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
           model: "dalle-3",
           createdAt: serverTimestamp()
         });
-        await logActivity('IMAGE_GEN', session.user.email || 'Unknown', `قام بتوليد صورة باستخدام DALL-E 3`);
+        logActivity('IMAGE_GEN', session.user.email || 'Unknown', `قام بتوليد صورة باستخدام DALL-E 3`);
       }
 
       return NextResponse.json({ 
