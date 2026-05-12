@@ -7,9 +7,9 @@ import Link from 'next/link';
 import { AmbientBackground } from '@/components/ui/AmbientBackground';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,12 +19,14 @@ export default function LoginPage() {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam) {
-      if (errorParam === 'OAuthSignin') setError('خطأ في الاتصال بمزود الخدمة (جوجل)');
-      else if (errorParam === 'OAuthCallback') setError('خطأ في الرد من جوجل - تأكد من روابط الـ Redirect');
-      else if (errorParam === 'OAuthCreateAccount') setError('فشل إنشاء حساب جديد عبر جوجل');
-      else if (errorParam === 'EmailSignin') setError('فشل إرسال بريد التحقق');
-      else if (errorParam === 'CredentialsSignin') setError('خطأ في البريد أو كلمة المرور');
-      else setError(`حدث خطأ في الدخول: ${errorParam}`);
+      if (errorParam === 'OAuthSignin' || errorParam === 'google') 
+        setError('فشل الاتصال بجوجل: تأكد من صحة المفاتيح (Client ID/Secret) في Vercel.');
+      else if (errorParam === 'OAuthCallback') 
+        setError('خطأ في روابط الـ Redirect: تأكد من إضافة الرابط في Google Console.');
+      else if (errorParam === 'CredentialsSignin') 
+        setError('خطأ في البريد أو كلمة المرور.');
+      else 
+        setError(`حدث خطأ تقني: ${errorParam}`);
     }
   }, [searchParams]);
 
@@ -38,16 +40,12 @@ export default function LoginPage() {
       const email = target.email.value;
       const password = target.password.value;
 
-      console.log("Attempting login for:", email);
-      
-      // Let NextAuth handle the redirect naturally to avoid CSRF/Protocol issues
       await signIn('credentials', {
         email,
         password,
         callbackUrl: '/chat',
       });
     } catch (err) {
-      console.error("Login Error:", err);
       setError('حدث خطأ غير متوقع أثناء الدخول');
       setLoading(false);
     }
@@ -78,15 +76,19 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold text-center">
-              {error}
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 p-5 bg-red-500/20 border-2 border-red-500/50 rounded-2xl text-red-500 text-sm font-black text-center shadow-2xl shadow-red-500/20"
+            >
+              ⚠️ {error}
+            </motion.div>
           )}
 
           <div className="space-y-4">
             <button 
               disabled={loading}
-              onClick={() => signIn('google')}
+              onClick={() => signIn('google', { callbackUrl: '/chat' })}
               className="w-full py-4 glass hover:bg-white/5 rounded-2xl flex items-center justify-center gap-3 font-black transition-all border-white/5 group disabled:opacity-50"
             >
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
@@ -160,5 +162,13 @@ export default function LoginPage() {
         </Link>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="w-10 h-10 animate-spin text-accent" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
