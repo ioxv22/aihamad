@@ -22,22 +22,20 @@ export async function POST(req: Request) {
     
     const openaiKey = process.env.OPENAI_API_KEY;
 
-    // 1. Save User Message to DB (if chatId and session exist)
+    // 1. Save User Message to DB (Asynchronously to save time)
     if (session?.user && chatId) {
       const messagesRef = collection(db, "messages");
-      await addDoc(messagesRef, {
+      addDoc(messagesRef, {
         chatId,
         role: "user",
         content: lastMessage.content,
         model: model,
         createdAt: serverTimestamp()
-      });
+      }).then(() => {
+        const chatRef = doc(db, "chats", chatId);
+        updateDoc(chatRef, { updatedAt: serverTimestamp() });
+      }).catch(e => console.error("Async DB Save Error:", e));
 
-      // Update chat's updatedAt
-      const chatRef = doc(db, "chats", chatId);
-      await updateDoc(chatRef, { updatedAt: serverTimestamp() });
-
-      // Log the activity to Firebase (non-blocking)
       logActivity('NEW_MESSAGE', session.user.email || 'Unknown', `أرسل رسالة جديدة: ${lastMessage.content.substring(0, 50)}...`);
     }
 
@@ -59,14 +57,13 @@ export async function POST(req: Request) {
       
       if (session?.user && chatId) {
         const messagesRef = collection(db, "messages");
-        await addDoc(messagesRef, {
+        addDoc(messagesRef, {
           chatId,
           role: "assistant",
           content: assistantMessage + ` [Image: ${imageUrl}]`,
           model: "dalle-3",
           createdAt: serverTimestamp()
         });
-        logActivity('IMAGE_GEN', session.user.email || 'Unknown', `قام بتوليد صورة باستخدام DALL-E 3`);
       }
 
       return NextResponse.json({ 
@@ -116,7 +113,7 @@ export async function POST(req: Request) {
     if (model.includes("gemini")) {
       const token = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
       if (!token) {
-        return NextResponse.json({ error: "عذراً، مفتاح Gemini غير متوفر حالياً. يرجى إضافته في إعدادات السيرفر." }, { status: 400 });
+        return NextResponse.json({ error: "عذراً، مفتاح Gemini غير متوفر حالياً." }, { status: 400 });
       }
       
       const genAI = new GoogleGenerativeAI(token);
@@ -136,23 +133,14 @@ export async function POST(req: Request) {
               fullText += text;
               controller.enqueue(new TextEncoder().encode(text)); 
             }
-            // Save Assistant Message to DB
             if (session?.user && chatId) {
               const messagesRef = collection(db, "messages");
-              await addDoc(messagesRef, {
-                chatId,
-                role: "assistant",
-                content: fullText,
-                model,
-                createdAt: serverTimestamp()
+              addDoc(messagesRef, {
+                chatId, role: "assistant", content: fullText, model, createdAt: serverTimestamp()
               });
-              await logActivity('AI_RESPONSE', 'System', `تمت معالجة رد بنجاح باستخدام ${model}`);
             }
-          } catch (e) {
-            console.error("Gemini Stream Error:", e);
-          } finally {
-            controller.close();
-          }
+          } catch (e) { console.error("Gemini Error:", e); }
+          finally { controller.close(); }
         },
       });
     } else {
@@ -160,7 +148,7 @@ export async function POST(req: Request) {
       const finalKey = isGitHub ? githubToken : openaiKey;
 
       if (!finalKey) {
-        return NextResponse.json({ error: "عذراً، لا يوجد مفتاح تشغيل متاح لهذا الموديل. يرجى التحقق من إعدادات API Key." }, { status: 400 });
+        return NextResponse.json({ error: "عذراً، لا يوجد مفتاح تشغيل متاح." }, { status: 400 });
       }
 
       const client = new OpenAI({
@@ -168,14 +156,8 @@ export async function POST(req: Request) {
         baseURL: isGitHub ? "https://models.inference.ai.azure.com" : undefined
       });
 
-      let actualModel = model;
-      if (isGitHub) {
-        if (model.includes("gpt-5") || model === "gpt-4o") actualModel = "gpt-4o";
-        else if (model.includes("deepseek")) actualModel = "DeepSeek-R1";
-      }
-
       const response = await client.chat.completions.create({
-        model: actualModel,
+        model: isGitHub ? "gpt-4o" : model,
         messages: formatOpenAIMessages(processedMessages),
         stream: true,
       });
@@ -189,20 +171,6 @@ export async function POST(req: Request) {
               fullText += text;
               controller.enqueue(new TextEncoder().encode(text));
             }
-            // Save Assistant Message to DB
-            if (session?.user && chatId) {
-              const messagesRef = collection(db, "messages");
-              await addDoc(messagesRef, {
-                chatId,
-                role: "assistant",
-                content: fullText,
-                model,
-                createdAt: serverTimestamp()
-              });
-              await logActivity('AI_RESPONSE', 'System', `تمت معالجة رد بنجاح باستخدام ${model}`);
-            }
-          } catch (e) {
-            console.error("OpenAI Stream Error:", e);
           } finally {
             controller.close();
           }
