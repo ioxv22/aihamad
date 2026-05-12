@@ -8,6 +8,7 @@ import { AmbientBackground } from '@/components/ui/AmbientBackground';
 
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [statsData, setStatsData] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
