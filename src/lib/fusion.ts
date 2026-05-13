@@ -59,13 +59,13 @@ async function callRedFoxModel(modelKey: string, prompt: string) {
 export async function runFusionEngine(userRequest: string, onUpdate: (text: string) => void) {
     onUpdate("🔮 جاري بدء محرك RedFox Fusion Engine...\n\n");
 
-    // Stage 1: Planning
     onUpdate("📋 المرحلة 1: التخطيط... (Grok 4.1)\n");
     const plan = await callRedFoxModel("grok-4.1-fast-reasoning", `حلل الطلب وأنتج خطة تقنية مختصرة: ${userRequest}`);
+    console.log("Stage 1 Plan:", plan.substring(0, 50));
     
-    // Stage 2: Writing
     onUpdate("✍️ المرحلة 2: الكتابة... (DeepSeek v3.2)\n");
     const rawCode = await callRedFoxModel("deepseek-v3.2", `اكتب الكود الكامل بناءً على الخطة: ${plan}\nالطلب: ${userRequest}`);
+    console.log("Stage 2 Code length:", rawCode.length);
 
     // Stage 3: Reviewing
     onUpdate("🔍 المرحلة 3: المراجعة... (Grok 4.2)\n");

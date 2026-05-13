@@ -179,8 +179,18 @@ export default function ChatPage() {
         });
         setCurrentResponse('');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat Error:', error);
+      addMessage({
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `⚠️ **خطأ في النظام:** لم يتمكن الذكاء الاصطناعي من الرد حالياً.
+        
+**السبب المحتمل:** ${error.message || 'فشل الاتصال بالخادم'}
+        
+يرجى التأكد من إضافة مفاتيح API في إعدادات Vercel أو المحاولة لاحقاً.`,
+        createdAt: new Date(),
+      });
     } finally {
       setLoading(false);
     }

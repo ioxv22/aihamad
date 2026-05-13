@@ -11,7 +11,9 @@ import { runFusionEngine } from "@/lib/fusion";
 
 export async function POST(req: Request) {
   try {
-    const { messages, model = "gpt-4o", chatId } = await req.json();
+    const body = await req.json();
+    console.log("Chat Request received:", { model: body.model, chatId: body.chatId });
+    const { messages, model = "gpt-4o", chatId } = body;
     const session = await getServerSession(authOptions);
     const lastMessage = messages[messages.length - 1];
 
@@ -178,6 +180,8 @@ export async function POST(req: Request) {
     let useGitHub = Boolean(!openaiKey && githubToken);
     let targetModel = model;
 
+    console.log("Using model:", targetModel, "Use GitHub:", useGitHub);
+
     // Smart Fallback Logic: If Gemini is selected but no key, switch to GitHub/OpenAI
     if (targetModel.includes("gemini") && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       console.log("Gemini key missing, falling back to GitHub/OpenAI");
@@ -265,7 +269,11 @@ export async function POST(req: Request) {
     return new Response(stream);
 
   } catch (error: any) {
-    console.error("API Error:", error);
-    return NextResponse.json({ error: "حدث خطأ أثناء معالجة طلبك: " + error.message }, { status: 500 });
+    console.error("API Route Error:", error);
+    return NextResponse.json({ 
+      error: "حدث خطأ أثناء معالجة طلبك", 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 });
   }
 }
