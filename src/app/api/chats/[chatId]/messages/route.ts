@@ -6,9 +6,9 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ chatId: string }> }
 ) {
-  const { id } = await params;
+  const { chatId } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -16,7 +16,7 @@ export async function GET(
     const messagesRef = collection(db, "messages");
     const q = query(
       messagesRef,
-      where("chatId", "==", id),
+      where("chatId", "==", chatId),
       orderBy("createdAt", "asc")
     );
 
